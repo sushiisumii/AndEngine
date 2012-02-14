@@ -423,7 +423,7 @@ public abstract class BaseMenuItemDecorator implements IMenuItem {
 	public void setBlendFunction(final int pSourceBlendFunction, final int pDestinationBlendFunction) {
 		this.mMenuItem.setBlendFunction(pSourceBlendFunction, pDestinationBlendFunction);
 	}
-
+	
 	@Override
 	public void setCullingEnabled(final boolean pCullingEnabled) {
 		this.mMenuItem.setCullingEnabled(pCullingEnabled);

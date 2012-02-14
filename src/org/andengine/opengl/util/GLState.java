@@ -18,6 +18,7 @@ import android.opengl.GLES20;
 import android.opengl.GLException;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.util.Log;
 
 /**
  * (c) 2010 Nicolas Gramlich
@@ -272,20 +273,20 @@ public class GLState {
 	public void checkFramebufferStatus() {
 		final int framebufferStatus = this.getFramebufferStatus();
 		switch(framebufferStatus) {
-			case GLES20.GL_FRAMEBUFFER_COMPLETE:
-				return;
-			case GLES20.GL_FRAMEBUFFER_UNSUPPORTED:
-				throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_UNSUPPORTED");
-			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-				throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-				throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
-			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-				throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-			case 0:
-				this.checkError();
-			default:
-				throw new GLException(framebufferStatus);
+		case GLES20.GL_FRAMEBUFFER_COMPLETE:
+			return;
+		case GLES20.GL_FRAMEBUFFER_UNSUPPORTED:
+			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_UNSUPPORTED");
+		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+		case 0:
+			this.checkError();
+		default:
+			throw new GLException(framebufferStatus);
 		}
 	}
 

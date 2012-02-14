@@ -121,6 +121,8 @@ public class Background implements IBackground {
 	@Override
 	public void onDraw(final GLState pGLState, final Camera pCamera) {
 		if(this.mColorEnabled) {
+			//pGLState.enableBlend();
+			//pGLState.blendFunction(GLES20.GL_ONE, GLES20.GL_ZERO); //ADDED
 			GLES20.glClearColor(this.mColor.getRed(), this.mColor.getGreen(), this.mColor.getBlue(), this.mColor.getAlpha());
 			GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT); // TODO See commented out code in Renderer, bc of MultiSample
 		}

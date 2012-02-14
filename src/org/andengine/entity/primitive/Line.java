@@ -14,8 +14,8 @@ import org.andengine.opengl.util.GLState;
 import org.andengine.opengl.vbo.HighPerformanceVertexBufferObject;
 import org.andengine.opengl.vbo.IVertexBufferObject;
 import org.andengine.opengl.vbo.LowMemoryVertexBufferObject;
-import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.VertexBufferObject.DrawType;
+import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttribute;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributes;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributesBuilder;
@@ -200,6 +200,24 @@ public class Line extends Shape {
 		return pCamera.isLineVisible(this);
 	}
 
+	public void doAllDraw(final GLState pGLState, final Camera pCamera) {
+		this.preDraw(pGLState, pCamera);
+		this.draw(pGLState, pCamera);
+		this.postDraw(pGLState, pCamera);
+	}
+	
+	public void doPreDraw(final GLState pGLState, final Camera pCamera) {
+		this.preDraw(pGLState, pCamera);
+	}
+	
+	public void doDraw(final GLState pGLState, final Camera pCamera) {
+		this.draw(pGLState, pCamera);
+	}
+	
+	public void doPostDraw(final GLState pGLState, final Camera pCamera) {
+		this.postDraw(pGLState, pCamera);
+	}
+	
 	@Override
 	protected void preDraw(final GLState pGLState, final Camera pCamera) {
 		super.preDraw(pGLState, pCamera);

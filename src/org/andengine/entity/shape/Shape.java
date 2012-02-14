@@ -11,6 +11,8 @@ import org.andengine.opengl.util.GLState;
 import org.andengine.opengl.vbo.IVertexBufferObject;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 
+import android.opengl.GLES20;
+
 /**
  * (c) 2010 Nicolas Gramlich
  * (c) 2011 Zynga Inc.
@@ -63,7 +65,7 @@ public abstract class Shape extends Entity implements IShape {
 		this.mSourceBlendFunction = pSourceBlendFunction;
 		this.mDestinationBlendFunction = pDestinationBlendFunction;
 	}
-
+	
 	@Override
 	public ShaderProgram getShaderProgram() {
 		return this.mShaderProgram;
