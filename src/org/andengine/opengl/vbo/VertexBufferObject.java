@@ -221,7 +221,7 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 	// Methods
 	// ===========================================================
 
-	private void loadToHardware(final GLState pGLState) {
+	public void loadToHardware(final GLState pGLState) {
 		this.mHardwareBufferID = pGLState.generateBuffer();
 		this.mDirtyOnHardware = true;
 	}
