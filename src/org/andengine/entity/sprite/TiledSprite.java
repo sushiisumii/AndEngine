@@ -26,7 +26,7 @@ public class TiledSprite extends Sprite {
 	// Constants
 	// ===========================================================
 
-	public static final int VERTEX_SIZE = 2 + 1 + 2;
+	public static final int VERTEX_SIZE = Sprite.VERTEX_SIZE;
 	public static final int VERTICES_PER_TILEDSPRITE = 6;
 	public static final int TILEDSPRITE_SIZE = TiledSprite.VERTEX_SIZE * TiledSprite.VERTICES_PER_TILEDSPRITE;
 
@@ -180,8 +180,8 @@ public class TiledSprite extends Sprite {
 		// Constructors
 		// ===========================================================
 
-		public HighPerformanceTiledSpriteVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pManaged, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
-			super(pVertexBufferObjectManager, pCapacity, pDrawType, pManaged, pVertexBufferObjectAttributes);
+		public HighPerformanceTiledSpriteVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pAutoDispose, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
+			super(pVertexBufferObjectManager, pCapacity, pDrawType, pAutoDispose, pVertexBufferObjectAttributes);
 		}
 
 		// ===========================================================
@@ -196,7 +196,7 @@ public class TiledSprite extends Sprite {
 		public void onUpdateColor(final TiledSprite pTiledSprite) {
 			final float[] bufferData = this.mBufferData;
 
-			final float packedColor = pTiledSprite.getColor().getPacked();
+			final float packedColor = pTiledSprite.getColor().getFloatPacked();
 
 			final int tileCount = pTiledSprite.getTileCount();
 			int bufferDataOffset = 0;
@@ -358,8 +358,8 @@ public class TiledSprite extends Sprite {
 		// Constructors
 		// ===========================================================
 
-		public LowMemoryTiledSpriteVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pManaged, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
-			super(pVertexBufferObjectManager, pCapacity, pDrawType, pManaged, pVertexBufferObjectAttributes);
+		public LowMemoryTiledSpriteVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pAutoDispose, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
+			super(pVertexBufferObjectManager, pCapacity, pDrawType, pAutoDispose, pVertexBufferObjectAttributes);
 		}
 
 		// ===========================================================
@@ -374,7 +374,7 @@ public class TiledSprite extends Sprite {
 		public void onUpdateColor(final TiledSprite pTiledSprite) {
 			final FloatBuffer bufferData = this.mFloatBuffer;
 
-			final float packedColor = pTiledSprite.getColor().getPacked();
+			final float packedColor = pTiledSprite.getColor().getFloatPacked();
 
 			final int tileCount = pTiledSprite.getTileCount();
 			int bufferDataOffset = 0;

@@ -3,8 +3,12 @@ package org.andengine.opengl.texture.render;
 import java.io.IOException;
 import java.nio.IntBuffer;
 
+import org.andengine.opengl.exception.GLException;
+import org.andengine.opengl.exception.GLFrameBufferException;
+import org.andengine.opengl.exception.RenderTextureInitializationException;
 import org.andengine.opengl.texture.PixelFormat;
 import org.andengine.opengl.texture.Texture;
+import org.andengine.opengl.texture.TextureManager;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.util.GLHelper;
 import org.andengine.opengl.util.GLState;
@@ -15,6 +19,7 @@ import android.graphics.Bitmap.Config;
 import android.opengl.GLES20;
 
 /**
+ * The general workflow with a {@link RenderTexture} is: {@link RenderTexture#init(GLState)} -> {@link RenderTexture#begin(GLState)} -> {@link RenderTexture#end(GLState)} -> {@link RenderTexture#destroy(GLState)}. 
  *
  * (c) Zynga 2011
  *
@@ -54,16 +59,18 @@ public class RenderTexture extends Texture {
 	private int mPreviousViewPortWidth;
 	private int mPreviousViewPortHeight;
 
+	private boolean mInitialized;
+
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public RenderTexture(final int pWidth, final int pHeight) {
-		this(pWidth, pHeight, PixelFormat.RGBA_8888);
+	public RenderTexture(final TextureManager pTextureManager, final int pWidth, final int pHeight) {
+		this(pTextureManager, pWidth, pHeight, PixelFormat.RGBA_8888);
 	}
 
-	public RenderTexture(final int pWidth, final int pHeight, final PixelFormat pPixelFormat) {
-		super(pPixelFormat, TextureOptions.NEAREST, null);
+	public RenderTexture(final TextureManager pTextureManager, final int pWidth, final int pHeight, final PixelFormat pPixelFormat) {
+		super(pTextureManager, pPixelFormat, TextureOptions.NEAREST, null);
 
 		this.mWidth = pWidth;
 		this.mHeight = pHeight;
@@ -85,6 +92,10 @@ public class RenderTexture extends Texture {
 		return this.mHeight;
 	}
 
+	public boolean isInitialized() {
+		return this.mInitialized;
+	}
+
 	// ===========================================================
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
@@ -98,7 +109,11 @@ public class RenderTexture extends Texture {
 	// Methods
 	// ===========================================================
 
-	public void init(final GLState pGLState) {
+	/**
+	 * @param pGLState
+	 * @throws RenderTextureInitializationException when this {@link RenderTexture} could not be initialized. The {@link GLException} contains the error code. When this exception is throw, all cleanup will be automatically performed through {@link RenderTexture#destroy(GLState)}.
+	 */
+	public void init(final GLState pGLState) throws GLFrameBufferException, GLException {
 		this.savePreviousFramebufferObjectID(pGLState);
 
 		try {
@@ -115,12 +130,19 @@ public class RenderTexture extends Texture {
 		pGLState.bindFramebuffer(this.mFramebufferObjectID);
 
 		/* Attach texture to FBO. */
-		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, this.mTextureID, 0);
+		GLES20.glFramebufferTexture2D(GLES20.GL_FRAMEBUFFER, GLES20.GL_COLOR_ATTACHMENT0, GLES20.GL_TEXTURE_2D, this.mHardwareTextureID, 0);
 
-		pGLState.checkError();
-		pGLState.checkFramebufferStatus();
+		try {
+			pGLState.checkFramebufferStatus();
+		} catch (final GLException e) {
+			this.destroy(pGLState);
 
-		this.restorePreviousFramebufferObjectID(pGLState);
+			throw new RenderTextureInitializationException(e);
+		} finally {
+			this.restorePreviousFramebufferObjectID(pGLState);
+		}
+
+		this.mInitialized = true;
 	}
 
 	/**
@@ -281,6 +303,8 @@ public class RenderTexture extends Texture {
 		this.unloadFromHardware(pGLState);
 
 		pGLState.deleteFramebuffer(this.mFramebufferObjectID);
+
+		this.mInitialized = false;
 	}
 
 	private void savePreviousFramebufferObjectID(final GLState pGLState) {

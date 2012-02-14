@@ -9,7 +9,7 @@ import org.andengine.entity.particle.emitter.IParticleEmitter;
 import org.andengine.entity.particle.initializer.IParticleInitializer;
 import org.andengine.entity.particle.modifier.IParticleModifier;
 import org.andengine.opengl.util.GLState;
-import org.andengine.util.constants.Constants;
+import org.andengine.util.Constants;
 import org.andengine.util.math.MathUtils;
 
 import android.util.FloatMath;
@@ -120,7 +120,7 @@ public class ParticleSystem<T extends Entity> extends Entity {
 	protected void onManagedUpdate(final float pSecondsElapsed) {
 		super.onManagedUpdate(pSecondsElapsed);
 
-		if(this.mParticlesSpawnEnabled) {
+		if(this.isParticlesSpawnEnabled()) {
 			this.spawnParticles(pSecondsElapsed);
 		}
 

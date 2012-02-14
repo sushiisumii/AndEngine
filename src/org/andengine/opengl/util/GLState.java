@@ -7,7 +7,9 @@ import java.util.Arrays;
 import javax.microedition.khronos.egl.EGLConfig;
 
 import org.andengine.engine.options.RenderOptions;
-import org.andengine.opengl.shader.util.constants.ShaderProgramConstants;
+import org.andengine.opengl.exception.GLException;
+import org.andengine.opengl.exception.GLFrameBufferException;
+import org.andengine.opengl.shader.constants.ShaderProgramConstants;
 import org.andengine.opengl.texture.PixelFormat;
 import org.andengine.opengl.texture.render.RenderTexture;
 import org.andengine.opengl.view.ConfigChooser;
@@ -15,7 +17,6 @@ import org.andengine.util.debug.Debug;
 
 import android.graphics.Bitmap;
 import android.opengl.GLES20;
-import android.opengl.GLException;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
 import android.util.Log;
@@ -270,23 +271,23 @@ public class GLState {
 		return GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER);
 	}
 
-	public void checkFramebufferStatus() {
+	public void checkFramebufferStatus() throws GLFrameBufferException, GLException {
 		final int framebufferStatus = this.getFramebufferStatus();
 		switch(framebufferStatus) {
-		case GLES20.GL_FRAMEBUFFER_COMPLETE:
-			return;
-		case GLES20.GL_FRAMEBUFFER_UNSUPPORTED:
-			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_UNSUPPORTED");
-		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
-		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
-			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
-		case GLES20.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-			throw new GLException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
-		case 0:
-			this.checkError();
-		default:
-			throw new GLException(framebufferStatus);
+			case GLES20.GL_FRAMEBUFFER_COMPLETE:
+				return;
+			case GLES20.GL_FRAMEBUFFER_UNSUPPORTED:
+				throw new GLFrameBufferException(framebufferStatus, "GL_FRAMEBUFFER_UNSUPPORTED");
+			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+				throw new GLFrameBufferException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT");
+			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS:
+				throw new GLFrameBufferException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS");
+			case GLES20.GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+				throw new GLFrameBufferException(framebufferStatus, "GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT");
+			case 0:
+				this.checkError();
+			default:
+				throw new GLFrameBufferException(framebufferStatus);
 		}
 	}
 
@@ -319,6 +320,10 @@ public class GLState {
 	public int generateTexture() {
 		GLES20.glGenTextures(1, this.mHardwareIDContainer, 0);
 		return this.mHardwareIDContainer[0];
+	}
+
+	public boolean isTexture(final int pHardwareTextureID) {
+		return GLES20.glIsTexture(pHardwareTextureID);
 	}
 
 	/**
@@ -522,7 +527,7 @@ public class GLState {
 		return GLES20.glGetError();
 	}
 
-	public void checkError() throws GLException { // TODO Use more often!
+	public void checkError() throws GLException {
 		final int error = GLES20.glGetError();
 		if(error != GLES20.GL_NO_ERROR) {
 			throw new GLException(error);

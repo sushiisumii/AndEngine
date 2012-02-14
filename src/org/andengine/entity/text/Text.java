@@ -5,12 +5,13 @@ import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.entity.shape.RectangularShape;
+import org.andengine.entity.text.exception.OutOfCharactersException;
 import org.andengine.opengl.font.FontUtils;
 import org.andengine.opengl.font.IFont;
 import org.andengine.opengl.font.Letter;
 import org.andengine.opengl.shader.PositionColorTextureCoordinatesShaderProgram;
 import org.andengine.opengl.shader.ShaderProgram;
-import org.andengine.opengl.shader.util.constants.ShaderProgramConstants;
+import org.andengine.opengl.shader.constants.ShaderProgramConstants;
 import org.andengine.opengl.util.GLState;
 import org.andengine.opengl.vbo.HighPerformanceVertexBufferObject;
 import org.andengine.opengl.vbo.IVertexBufferObject;
@@ -20,10 +21,9 @@ import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributes;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributesBuilder;
 import org.andengine.util.HorizontalAlign;
-import org.andengine.util.StringUtils;
-import org.andengine.util.data.DataConstants;
-import org.andengine.util.list.FloatArrayList;
-import org.andengine.util.list.IFloatList;
+import org.andengine.util.adt.DataConstants;
+import org.andengine.util.adt.list.FloatArrayList;
+import org.andengine.util.adt.list.IFloatList;
 
 import android.opengl.GLES20;
 
@@ -71,84 +71,85 @@ public class Text extends RectangularShape {
 
 	protected TextOptions mTextOptions;
 	protected final int mCharactersMaximum;
+	protected int mCharactersToDraw;
 	protected int mVertexCountToDraw;
 	protected final int mVertexCount;
 
 	protected final ITextVertexBufferObject mTextVertexBufferObject;
 
-	protected String mText;
-	protected ArrayList<String> mLines = new ArrayList<String>(1);
+	protected CharSequence mText;
+	protected ArrayList<CharSequence> mLines = new ArrayList<CharSequence>(1);
 	protected IFloatList mLineWidths = new FloatArrayList(1);
 
 	// ===========================================================
 	// Constructors
 	// ===========================================================
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final VertexBufferObjectManager pVertexBufferObjectManager) {
 		this(pX, pY, pFont, pText, pVertexBufferObjectManager, DrawType.STATIC);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pVertexBufferObjectManager, DrawType.STATIC, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
 		this(pX, pY, pFont, pText, new TextOptions(), pVertexBufferObjectManager, pDrawType);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, new TextOptions(), pVertexBufferObjectManager, pDrawType, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager) {
 		this(pX, pY, pFont, pText, pTextOptions, pVertexBufferObjectManager, DrawType.STATIC);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pTextOptions, pVertexBufferObjectManager, DrawType.STATIC, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
 		this(pX, pY, pFont, pText, pText.length(), pTextOptions, pVertexBufferObjectManager, pDrawType);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pText.length(), pTextOptions, pVertexBufferObjectManager, pDrawType, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pVertexBufferObjectManager, DrawType.STATIC);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pVertexBufferObjectManager, DrawType.STATIC, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, new TextOptions(), pVertexBufferObjectManager, pDrawType);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, new TextOptions(), pVertexBufferObjectManager, pDrawType, pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pTextOptions, pVertexBufferObjectManager, DrawType.STATIC);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pTextOptions, new HighPerformanceTextVertexBufferObject(pVertexBufferObjectManager, Text.LETTER_SIZE * pCharactersMaximum, pDrawType, true, Text.VERTEXBUFFEROBJECTATTRIBUTES_DEFAULT));
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final TextOptions pTextOptions, final VertexBufferObjectManager pVertexBufferObjectManager, final DrawType pDrawType, final ShaderProgram pShaderProgram) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pTextOptions, new HighPerformanceTextVertexBufferObject(pVertexBufferObjectManager, Text.LETTER_SIZE * pCharactersMaximum, pDrawType, true, Text.VERTEXBUFFEROBJECTATTRIBUTES_DEFAULT), pShaderProgram);
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final TextOptions pTextOptions, final ITextVertexBufferObject pTextVertexBufferObject) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final TextOptions pTextOptions, final ITextVertexBufferObject pTextVertexBufferObject) {
 		this(pX, pY, pFont, pText, pCharactersMaximum, pTextOptions, pTextVertexBufferObject, PositionColorTextureCoordinatesShaderProgram.getInstance());
 	}
 
-	public Text(final float pX, final float pY, final IFont pFont, final String pText, final int pCharactersMaximum, final TextOptions pTextOptions, final ITextVertexBufferObject pTextVertexBufferObject, final ShaderProgram pShaderProgram) {
+	public Text(final float pX, final float pY, final IFont pFont, final CharSequence pText, final int pCharactersMaximum, final TextOptions pTextOptions, final ITextVertexBufferObject pTextVertexBufferObject, final ShaderProgram pShaderProgram) {
 		super(pX, pY, 0, 0, pShaderProgram);
 
 		this.mFont = pFont;
@@ -176,11 +177,15 @@ public class Text extends RectangularShape {
 		return this.mCharactersMaximum;
 	}
 
-	public String getText() {
+	public CharSequence getText() {
 		return this.mText;
 	}
 
-	public void setText(final String pText) {
+	/**
+	 * @param pText
+	 * @throws OutOfCharactersException leaves this {@link Text} object in an undefined state, until {@link Text#setText(CharSequence)} is called again and no {@link OutOfCharactersException} is thrown.
+	 */
+	public void setText(final CharSequence pText) throws OutOfCharactersException {
 		this.mText = pText;
 		final IFont font = this.mFont;
 
@@ -222,11 +227,10 @@ public class Text extends RectangularShape {
 		this.mScaleCenterX = this.mRotationCenterX;
 		this.mScaleCenterY = this.mRotationCenterY;
 
-		this.mVertexCountToDraw = StringUtils.countCharacters(this.mLines) * Text.VERTICES_PER_LETTER;
 		this.onUpdateVertices();
 	}
 
-	public ArrayList<String> getLines() {
+	public ArrayList<CharSequence> getLines() {
 		return this.mLines;
 	}
 
@@ -288,6 +292,14 @@ public class Text extends RectangularShape {
 
 	public void setTextOptions(final TextOptions pTextOptions) {
 		this.mTextOptions = pTextOptions;
+	}
+
+	/* package */ void setCharactersToDraw(final int pCharactersToDraw) {
+		if(pCharactersToDraw > this.mCharactersMaximum) {
+			throw new OutOfCharactersException("Characters: maximum: '" + this.mCharactersMaximum + "' required: '" + pCharactersToDraw + "'.");
+		}
+		this.mCharactersToDraw = pCharactersToDraw;
+		this.mVertexCountToDraw = pCharactersToDraw * Text.VERTICES_PER_LETTER;
 	}
 
 	// ===========================================================
@@ -454,8 +466,8 @@ public class Text extends RectangularShape {
 		// Constructors
 		// ===========================================================
 
-		public HighPerformanceTextVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pManaged, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
-			super(pVertexBufferObjectManager, pCapacity, pDrawType, pManaged, pVertexBufferObjectAttributes);
+		public HighPerformanceTextVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pAutoDispose, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
+			super(pVertexBufferObjectManager, pCapacity, pDrawType, pAutoDispose, pVertexBufferObjectAttributes);
 		}
 
 		// ===========================================================
@@ -470,7 +482,7 @@ public class Text extends RectangularShape {
 		public void onUpdateColor(final Text pText) {
 			final float[] bufferData = this.mBufferData;
 
-			final float packedColor = pText.getColor().getPacked();
+			final float packedColor = pText.getColor().getFloatPacked();
 
 			int bufferDataOffset = 0;
 			final int charactersMaximum = pText.getCharactersMaximum();
@@ -494,17 +506,18 @@ public class Text extends RectangularShape {
 
 			// TODO Optimize with field access?
 			final IFont font = pText.getFont();
-			final ArrayList<String> lines = pText.getLines();
+			final ArrayList<CharSequence> lines = pText.getLines();
 			final float lineHeight = font.getLineHeight();
 			final IFloatList lineWidths = pText.getLineWidths();
 
 			final float lineAlignmentWidth = pText.getLineAlignmentWidth();
 
+			int charactersToDraw = 0;
 			int bufferDataOffset = 0;
 
 			final int lineCount = lines.size();
 			for (int row = 0; row < lineCount; row++) {
-				final String line = lines.get(row);
+				final CharSequence line = lines.get(row);
 
 				float xBase;
 				switch(pText.getHorizontalAlign()) {
@@ -529,54 +542,58 @@ public class Text extends RectangularShape {
 						xBase += previousLetter.getKerning(letter.mCharacter);
 					}
 
-					final float x = xBase + letter.mOffsetX;
-					final float y = yBase + letter.mOffsetY;
+					if(!letter.isWhitespace()) {
+						final float x = xBase + letter.mOffsetX;
+						final float y = yBase + letter.mOffsetY;
 
-					final float y2 = y + letter.mHeight;
-					final float x2 = x + letter.mWidth;
+						final float y2 = y + letter.mHeight;
+						final float x2 = x + letter.mWidth;
 
-					final float u = letter.mU;
-					final float v = letter.mV;
-					final float u2 = letter.mU2;
-					final float v2 = letter.mV2;
+						final float u = letter.mU;
+						final float v = letter.mV;
+						final float u2 = letter.mU2;
+						final float v2 = letter.mV2;
 
-					bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
-					bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
-					bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
-					bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
+						bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
+						bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
+						bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
+						bufferData[bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
 
-					bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
-					bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
-					bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
-					bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
+						bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
+						bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
+						bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
+						bufferData[bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
 
-					bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
-					bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
-					bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
-					bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
+						bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
+						bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
+						bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
+						bufferData[bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
 
-					bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
-					bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
-					bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
-					bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
+						bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
+						bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y2;
+						bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
+						bufferData[bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v2;
 
-					bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
-					bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
-					bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
-					bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
+						bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x2;
+						bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
+						bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u2;
+						bufferData[bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
 
-					bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
-					bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
-					bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
-					bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
+						bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X] = x;
+						bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y] = y;
+						bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U] = u;
+						bufferData[bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V] = v;
+
+						bufferDataOffset += Text.LETTER_SIZE;
+						charactersToDraw++;
+					}
 
 					xBase += letter.mAdvance;
-
-					bufferDataOffset += Text.LETTER_SIZE;
 
 					previousLetter = letter;
 				}
 			}
+			pText.setCharactersToDraw(charactersToDraw);
 
 			this.setDirtyOnHardware();
 		}
@@ -603,8 +620,8 @@ public class Text extends RectangularShape {
 		// Constructors
 		// ===========================================================
 
-		public LowMemoryTextVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pManaged, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
-			super(pVertexBufferObjectManager, pCapacity, pDrawType, pManaged, pVertexBufferObjectAttributes);
+		public LowMemoryTextVertexBufferObject(final VertexBufferObjectManager pVertexBufferObjectManager, final int pCapacity, final DrawType pDrawType, final boolean pAutoDispose, final VertexBufferObjectAttributes pVertexBufferObjectAttributes) {
+			super(pVertexBufferObjectManager, pCapacity, pDrawType, pAutoDispose, pVertexBufferObjectAttributes);
 		}
 
 		// ===========================================================
@@ -619,7 +636,7 @@ public class Text extends RectangularShape {
 		public void onUpdateColor(final Text pText) {
 			final FloatBuffer bufferData = this.mFloatBuffer;
 
-			final float packedColor = pText.getColor().getPacked();
+			final float packedColor = pText.getColor().getFloatPacked();
 
 			int bufferDataOffset = 0;
 			final int charactersMaximum = pText.getCharactersMaximum();
@@ -643,17 +660,18 @@ public class Text extends RectangularShape {
 
 			// TODO Optimize with field access?
 			final IFont font = pText.getFont();
-			final ArrayList<String> lines = pText.getLines();
+			final ArrayList<CharSequence> lines = pText.getLines();
 			final float lineHeight = font.getLineHeight();
 			final IFloatList lineWidths = pText.getLineWidths();
 
 			final float lineAlignmentWidth = pText.getLineAlignmentWidth();
 
+			int charactersToDraw = 0;
 			int bufferDataOffset = 0;
 
 			final int lineCount = lines.size();
 			for (int i = 0; i < lineCount; i++) {
-				final String line = lines.get(i);
+				final CharSequence line = lines.get(i);
 
 				float xBase;
 
@@ -679,54 +697,58 @@ public class Text extends RectangularShape {
 						xBase += previousLetter.getKerning(letter.mCharacter);
 					}
 
-					final float x = xBase + letter.mOffsetX;
-					final float y = yBase + letter.mOffsetY;
+					if(!letter.isWhitespace()) {
+						final float x = xBase + letter.mOffsetX;
+						final float y = yBase + letter.mOffsetY;
 
-					final float y2 = y + letter.mHeight;
-					final float x2 = x + letter.mWidth;
+						final float y2 = y + letter.mHeight;
+						final float x2 = x + letter.mWidth;
 
-					final float u = letter.mU;
-					final float v = letter.mV;
-					final float u2 = letter.mU2;
-					final float v2 = letter.mV2;
+						final float u = letter.mU;
+						final float v = letter.mV;
+						final float u2 = letter.mU2;
+						final float v2 = letter.mV2;
 
-					bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
-					bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
-					bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
-					bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
+						bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
+						bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
+						bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
+						bufferData.put(bufferDataOffset + 0 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
 
-					bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
-					bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
-					bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
-					bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
+						bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
+						bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
+						bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
+						bufferData.put(bufferDataOffset + 1 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
 
-					bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
-					bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
-					bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
-					bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
+						bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
+						bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
+						bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
+						bufferData.put(bufferDataOffset + 2 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
 
-					bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
-					bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
-					bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
-					bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
+						bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
+						bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y2);
+						bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
+						bufferData.put(bufferDataOffset + 3 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v2);
 
-					bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
-					bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
-					bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
-					bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
+						bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x2);
+						bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
+						bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u2);
+						bufferData.put(bufferDataOffset + 4 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
 
-					bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
-					bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
-					bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
-					bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
+						bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_X, x);
+						bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.VERTEX_INDEX_Y, y);
+						bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_U, u);
+						bufferData.put(bufferDataOffset + 5 * Text.VERTEX_SIZE + Text.TEXTURECOORDINATES_INDEX_V, v);
+
+						bufferDataOffset += Text.LETTER_SIZE;
+						charactersToDraw++;
+					}
 
 					xBase += letter.mAdvance;
-
-					bufferDataOffset += Text.LETTER_SIZE;
 
 					previousLetter = letter;
 				}
 			}
+			pText.setCharactersToDraw(charactersToDraw);
 
 			this.setDirtyOnHardware();
 		}

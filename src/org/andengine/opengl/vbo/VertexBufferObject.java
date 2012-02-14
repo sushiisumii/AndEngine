@@ -7,13 +7,16 @@ import org.andengine.opengl.shader.ShaderProgram;
 import org.andengine.opengl.util.BufferUtils;
 import org.andengine.opengl.util.GLState;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributes;
-import org.andengine.util.data.DataConstants;
+import org.andengine.util.adt.DataConstants;
 import org.andengine.util.system.SystemUtils;
 
 import android.opengl.GLES20;
 import android.os.Build;
 
 /**
+ * TODO Extract a common base class from {@link VertexBufferObject} and {@link ZeroMemoryVertexBufferObject} (due to significant code duplication).
+ * 		For naming, maybe be inspired by the java ByteBuffer naming (i.e. HeapBackedFloatArrayVertexBufferObject, StreamBufferVertexBufferObject, SharedBufferStreamVertexBufferObject).  
+ *
  * (c) 2010 Nicolas Gramlich
  * (c) 2011 Zynga Inc.
  * 
@@ -34,8 +37,7 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 	protected final int mUsage;
 	protected final ByteBuffer mByteBuffer;
 
-	protected int mHardwareBufferID = -1;
-	protected boolean mLoadedToHardware;
+	protected int mHardwareBufferID = IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID;
 	protected boolean mDirtyOnHardware = true;
 
 	protected boolean mDisposed;
@@ -97,12 +99,13 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 
 	@Override
 	public boolean isLoadedToHardware() {
-		return this.mLoadedToHardware;
+		return this.mHardwareBufferID != IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID;
 	}
 
 	@Override
-	public void setLoadedToHardware(final boolean pLoadedToHardware) {
-		this.mLoadedToHardware = pLoadedToHardware;
+	public void setNotLoadedToHardware() {
+		this.mHardwareBufferID = IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID;
+		this.mDirtyOnHardware = true;
 	}
 
 	@Override
@@ -110,7 +113,6 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 		return this.mDirtyOnHardware;
 	}
 
-	/** Mark this {@link VertexBufferObject} dirty so it gets updated on the hardware. */
 	@Override
 	public void setDirtyOnHardware() {
 		this.mDirtyOnHardware = true;
@@ -126,31 +128,41 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 		return this.mByteBuffer.capacity();
 	}
 
+	@Override
+	public int getGPUMemoryByteSize() {
+		if(this.isLoadedToHardware()) {
+			return this.getByteCapacity();
+		} else {
+			return 0;
+		}
+	}
+
 	// ===========================================================
 	// Methods for/from SuperClass/Interfaces
 	// ===========================================================
 
 	protected abstract void onBufferData();
 
-	// ===========================================================
-	// Methods
-	// ===========================================================
-
 	@Override
-	public void bind(final GLState pGLState, final ShaderProgram pShaderProgram) {
-		if(!this.mLoadedToHardware) {
+	public void bind(final GLState pGLState) {
+		if(this.mHardwareBufferID == IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID) {
 			this.loadToHardware(pGLState);
+
 			this.mVertexBufferObjectManager.onVertexBufferObjectLoaded(this);
-			this.mDirtyOnHardware = true;
 		}
 
 		pGLState.bindBuffer(this.mHardwareBufferID);
 
 		if(this.mDirtyOnHardware) {
-			this.mDirtyOnHardware = false;
-
 			this.onBufferData();
+
+			this.mDirtyOnHardware = false;
 		}
+	}
+
+	@Override
+	public void bind(final GLState pGLState, final ShaderProgram pShaderProgram) {
+		this.bind(pGLState);
 
 		pShaderProgram.bind(pGLState, this.mVertexBufferObjectAttributes);
 	}
@@ -164,18 +176,10 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 	}
 
 	@Override
-	public void loadToHardware(final GLState pGLState) {
-		this.mHardwareBufferID = pGLState.generateBuffer();
-
-		this.mLoadedToHardware = true;
-	}
-
-	@Override
 	public void unloadFromHardware(final GLState pGLState) {
 		pGLState.deleteBuffer(this.mHardwareBufferID);
 
-		this.mHardwareBufferID = -1;
-		this.mLoadedToHardware = false;
+		this.mHardwareBufferID = IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID;
 	}
 
 	@Override
@@ -211,6 +215,15 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 		if(!this.mDisposed) {
 			this.dispose();
 		}
+	}
+
+	// ===========================================================
+	// Methods
+	// ===========================================================
+
+	private void loadToHardware(final GLState pGLState) {
+		this.mHardwareBufferID = pGLState.generateBuffer();
+		this.mDirtyOnHardware = true;
 	}
 
 	// ===========================================================

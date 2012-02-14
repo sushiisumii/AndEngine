@@ -1,8 +1,8 @@
 package org.andengine.entity;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import org.andengine.engine.camera.Camera;
 import org.andengine.engine.handler.IUpdateHandler;
@@ -11,11 +11,12 @@ import org.andengine.entity.modifier.EntityModifierList;
 import org.andengine.entity.modifier.IEntityModifier;
 import org.andengine.entity.modifier.IEntityModifier.IEntityModifierMatcher;
 import org.andengine.opengl.util.GLState;
-import org.andengine.util.ParameterCallable;
-import org.andengine.util.SmartList;
+import org.andengine.util.Constants;
+import org.andengine.util.adt.list.ListUtils;
+import org.andengine.util.adt.list.SmartList;
+import org.andengine.util.adt.transformation.Transformation;
+import org.andengine.util.call.ParameterCallable;
 import org.andengine.util.color.Color;
-import org.andengine.util.constants.Constants;
-import org.andengine.util.transformation.Transformation;
 
 
 /**
@@ -306,7 +307,7 @@ public class Entity implements IEntity {
 
 	@Override
 	public boolean isScaled() {
-		return this.mScaleX != 1 || this.mScaleY != 1;
+		return (this.mScaleX != 1) || (this.mScaleY != 1);
 	}
 
 	@Override
@@ -383,7 +384,7 @@ public class Entity implements IEntity {
 
 	@Override
 	public boolean isSkewed() {
-		return this.mSkewX != 0 || this.mSkewY != 0;
+		return (this.mSkewX != 0) || (this.mSkewY != 0);
 	}
 
 	@Override
@@ -460,7 +461,7 @@ public class Entity implements IEntity {
 
 	@Override
 	public boolean isRotatedOrScaledOrSkewed() {
-		return this.mRotation != 0 || this.mScaleX != 1 || this.mScaleY != 1 || this.mSkewX != 0 || this.mSkewY != 0;
+		return (this.mRotation != 0) || (this.mScaleX != 1) || (this.mScaleY != 1) || (this.mSkewX != 0) || (this.mSkewY != 0);
 	}
 
 	@Override
@@ -512,7 +513,7 @@ public class Entity implements IEntity {
 	 */
 	@Override
 	public void setColor(final float pRed, final float pGreen, final float pBlue) {
-		if(this.mColor.setChanging(pRed, pGreen, pBlue)) { // TODO Is this check worth it?
+		if(this.mColor.setChecking(pRed, pGreen, pBlue)) { // TODO Is this check worth it?
 			this.onUpdateColor();
 		}
 	}
@@ -525,7 +526,7 @@ public class Entity implements IEntity {
 	 */
 	@Override
 	public void setColor(final float pRed, final float pGreen, final float pBlue, final float pAlpha) {
-		if(this.mColor.setChanging(pRed, pGreen, pBlue, pAlpha)) { // TODO Is this check worth it?
+		if(this.mColor.setChecking(pRed, pGreen, pBlue, pAlpha)) { // TODO Is this check worth it?
 			this.onUpdateColor();
 		}
 	}
@@ -547,25 +548,8 @@ public class Entity implements IEntity {
 	}
 
 	@Override
-	public int getChildIndex(final IEntity pEntity) {
-		if (this.mChildren == null || pEntity.getParent() != this) {
-			return -1;
-		}
-		return this.mChildren.indexOf(pEntity);
-	}
-
-	@Override
-	public boolean setChildIndex(final IEntity pEntity, final int pIndex) {
-		if (this.mChildren == null || pEntity.getParent() != this) {
-			return false;
-		}
-		try {
-			this.mChildren.remove(pEntity);
-			this.mChildren.add(pIndex, pEntity);
-			return true;
-		} catch (final IndexOutOfBoundsException e) {
-			return false;
-		}
+	public IEntity getChild(final IEntityMatcher pEntityMatcher) {
+		return this.getChild(this.mChildren.indexOf(pEntityMatcher));
 	}
 
 	@Override
@@ -582,6 +566,69 @@ public class Entity implements IEntity {
 			return null;
 		}
 		return this.mChildren.get(this.mChildren.size() - 1);
+	}
+
+	@Override
+	public int getChildIndex(final IEntity pEntity) {
+		if ((this.mChildren == null) || (pEntity.getParent() != this)) {
+			return -1;
+		}
+		return this.mChildren.indexOf(pEntity);
+	}
+
+	@Override
+	public boolean setChildIndex(final IEntity pEntity, final int pIndex) {
+		if ((this.mChildren == null) || (pEntity.getParent() != this)) {
+			return false;
+		}
+		try {
+			this.mChildren.remove(pEntity);
+			this.mChildren.add(pIndex, pEntity);
+			return true;
+		} catch (final IndexOutOfBoundsException e) {
+			return false;
+		}
+	}
+
+	@Override
+	public ArrayList<IEntity> query(final IEntityMatcher pEntityMatcher) {
+		return this.query(pEntityMatcher, new ArrayList<IEntity>());
+	}
+
+	@Override
+	public <L extends List<IEntity>> L query(final IEntityMatcher pEntityMatcher, final L pResult) {
+		final int childCount = this.getChildCount();
+		for(int i = 0; i < childCount; i++) {
+			final IEntity item = this.mChildren.get(i);
+			if(pEntityMatcher.matches(item)) {
+				pResult.add(item);
+			}
+
+			item.query(pEntityMatcher, pResult);
+		}
+
+		return pResult;
+	}
+
+	@Override
+	public <S extends IEntity> ArrayList<S> queryForSubclass(final IEntityMatcher pEntityMatcher) throws ClassCastException {
+		return this.queryForSubclass(pEntityMatcher, new ArrayList<S>());
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public <L extends List<S>, S extends IEntity> L queryForSubclass(final IEntityMatcher pEntityMatcher, final L pResult) throws ClassCastException {
+		final int childCount = this.getChildCount();
+		for(int i = 0; i < childCount; i++) {
+			final IEntity item = this.mChildren.get(i);
+			if(pEntityMatcher.matches(item)) {
+				pResult.add((S)item);
+			}
+
+			item.queryForSubclass(pEntityMatcher, pResult);
+		}
+
+		return pResult;
 	}
 
 	@Override
@@ -634,14 +681,6 @@ public class Entity implements IEntity {
 	}
 
 	@Override
-	public IEntity findChild(final IEntityMatcher pEntityMatcher) {
-		if(this.mChildren == null) {
-			return null;
-		}
-		return this.mChildren.find(pEntityMatcher);
-	}
-
-	@Override
 	public boolean swapChildren(final IEntity pEntityA, final IEntity pEntityB) {
 		return this.swapChildren(this.getChildIndex(pEntityA), this.getChildIndex(pEntityB));
 	}
@@ -649,7 +688,7 @@ public class Entity implements IEntity {
 	@Override
 	public boolean swapChildren(final int pIndexA, final int pIndexB) {
 		try {
-			Collections.swap(this.mChildren, pIndexA, pIndexB);
+			ListUtils.swap(this.mChildren, pIndexA, pIndexB);
 			return true;
 		} catch (final IndexOutOfBoundsException e) {
 			return false;
@@ -799,7 +838,7 @@ public class Entity implements IEntity {
 			/* Scale. */
 			final float scaleX = this.mScaleX;
 			final float scaleY = this.mScaleY;
-			if(scaleX != 1 || scaleY != 1) {
+			if((scaleX != 1) || (scaleY != 1)) {
 				final float scaleCenterX = this.mScaleCenterX;
 				final float scaleCenterY = this.mScaleCenterY;
 
@@ -814,7 +853,7 @@ public class Entity implements IEntity {
 			/* Skew. */
 			final float skewX = this.mSkewX;
 			final float skewY = this.mSkewY;
-			if(skewX != 0 || skewY != 0) {
+			if((skewX != 0) || (skewY != 0)) {
 				final float skewCenterX = this.mSkewCenterX;
 				final float skewCenterY = this.mSkewCenterY;
 
@@ -865,7 +904,7 @@ public class Entity implements IEntity {
 			/* Skew. */
 			final float skewX = this.mSkewX;
 			final float skewY = this.mSkewY;
-			if(skewX != 0 || skewY != 0) {
+			if((skewX != 0) || (skewY != 0)) {
 				final float skewCenterX = this.mSkewCenterX;
 				final float skewCenterY = this.mSkewCenterY;
 
@@ -877,7 +916,7 @@ public class Entity implements IEntity {
 			/* Scale. */
 			final float scaleX = this.mScaleX;
 			final float scaleY = this.mScaleY;
-			if(scaleX != 1 || scaleY != 1) {
+			if((scaleX != 1) || (scaleY != 1)) {
 				final float scaleCenterX = this.mScaleCenterX;
 				final float scaleCenterY = this.mScaleCenterY;
 
@@ -1064,7 +1103,7 @@ public class Entity implements IEntity {
 		}
 
 		if(this.mChildren != null) {
-			final ArrayList<IEntity> entities = this.mChildren;
+			final SmartList<IEntity> entities = this.mChildren;
 			for(int i = entities.size() - 1; i >= 0; i--) {
 				entities.get(i).reset();
 			}
@@ -1100,12 +1139,12 @@ public class Entity implements IEntity {
 	public void toString(final StringBuilder pStringBuilder) {
 		pStringBuilder.append(this.getClass().getSimpleName());
 
-		if(this.mChildren != null && this.mChildren.size() > 0) {
+		if((this.mChildren != null) && (this.mChildren.size() > 0)) {
 			pStringBuilder.append(" [");
-			final ArrayList<IEntity> entities = this.mChildren;
+			final SmartList<IEntity> entities = this.mChildren;
 			for(int i = 0; i < entities.size(); i++) {
 				entities.get(i).toString(pStringBuilder);
-				if(i < entities.size() - 1) {
+				if(i < (entities.size() - 1)) {
 					pStringBuilder.append(", ");
 				}
 			}
@@ -1192,7 +1231,7 @@ public class Entity implements IEntity {
 		final float skewX = this.mSkewX;
 		final float skewY = this.mSkewY;
 
-		if(skewX != 0 || skewY != 0) {
+		if((skewX != 0) || (skewY != 0)) {
 			final float skewCenterX = this.mSkewCenterX;
 			final float skewCenterY = this.mSkewCenterY;
 
@@ -1206,7 +1245,7 @@ public class Entity implements IEntity {
 		final float scaleX = this.mScaleX;
 		final float scaleY = this.mScaleY;
 
-		if(scaleX != 1 || scaleY != 1) {
+		if((scaleX != 1) || (scaleY != 1)) {
 			final float scaleCenterX = this.mScaleCenterX;
 			final float scaleCenterY = this.mScaleCenterY;
 
@@ -1221,8 +1260,8 @@ public class Entity implements IEntity {
 		{
 			this.onApplyTransformations(pGLState);
 
-			final ArrayList<IEntity> children = this.mChildren;
-			if(children == null || !this.mChildrenVisible) {
+			final SmartList<IEntity> children = this.mChildren;
+			if((children == null) || !this.mChildrenVisible) {
 				/* Draw only self. */
 				this.preDraw(pGLState, pCamera);
 				this.draw(pGLState, pCamera);
@@ -1269,8 +1308,8 @@ public class Entity implements IEntity {
 			this.mUpdateHandlers.onUpdate(pSecondsElapsed);
 		}
 
-		if(this.mChildren != null && !this.mChildrenIgnoreUpdate) {
-			final ArrayList<IEntity> entities = this.mChildren;
+		if((this.mChildren != null) && !this.mChildrenIgnoreUpdate) {
+			final SmartList<IEntity> entities = this.mChildren;
 			final int entityCount = entities.size();
 			for(int i = 0; i < entityCount; i++) {
 				entities.get(i).onUpdate(pSecondsElapsed);

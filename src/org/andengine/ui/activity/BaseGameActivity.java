@@ -7,21 +7,21 @@ import org.andengine.engine.options.EngineOptions;
 import org.andengine.engine.options.EngineOptions.ScreenOrientation;
 import org.andengine.engine.options.WakeLockOptions;
 import org.andengine.entity.scene.Scene;
+import org.andengine.input.sensor.acceleration.AccelerationSensorOptions;
+import org.andengine.input.sensor.acceleration.IAccelerationListener;
+import org.andengine.input.sensor.location.ILocationListener;
+import org.andengine.input.sensor.location.LocationSensorOptions;
+import org.andengine.input.sensor.orientation.IOrientationListener;
+import org.andengine.input.sensor.orientation.OrientationSensorOptions;
 import org.andengine.opengl.font.FontManager;
 import org.andengine.opengl.shader.ShaderProgramManager;
 import org.andengine.opengl.texture.TextureManager;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.view.IRendererListener;
 import org.andengine.opengl.view.RenderSurfaceView;
-import org.andengine.sensor.accelerometer.AccelerometerSensorOptions;
-import org.andengine.sensor.accelerometer.IAccelerometerListener;
-import org.andengine.sensor.location.ILocationListener;
-import org.andengine.sensor.location.LocationSensorOptions;
-import org.andengine.sensor.orientation.IOrientationListener;
-import org.andengine.sensor.orientation.OrientationSensorOptions;
 import org.andengine.ui.IGameInterface;
 import org.andengine.util.ActivityUtils;
-import org.andengine.util.constants.Constants;
+import org.andengine.util.Constants;
 import org.andengine.util.debug.Debug;
 import org.andengine.util.system.SystemUtils;
 
@@ -93,6 +93,10 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 
 		if(this.mGameCreated) {
 			this.onReloadResources();
+
+			if(this.mGamePaused && this.mGameCreated) {
+				this.onResumeGame();
+			}
 		} else {
 			if(this.mCreateGameCalled) {
 				this.mOnReloadResourcesScheduled = true;
@@ -104,11 +108,11 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	@Override
-	public void onSurfaceChanged(final int pWidth, final int pHeight) {
+	public synchronized void onSurfaceChanged(final int pWidth, final int pHeight) {
 		Debug.d(this.getClass().getSimpleName() + ".onSurfaceChanged(Width=" + pWidth + ",  Height=" + pHeight + ")" + " @(Thread: '" + Thread.currentThread().getName() + "')");
 	}
 
-	protected void onCreateGame() {
+	protected synchronized void onCreateGame() {
 		Debug.d(this.getClass().getSimpleName() + ".onCreateGame" + " @(Thread: '" + Thread.currentThread().getName() + "')");
 
 		final OnPopulateSceneCallback onPopulateSceneCallback = new OnPopulateSceneCallback() {
@@ -181,7 +185,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	@Override
-	protected void onResume() {
+	protected synchronized void onResume() {
 		Debug.d(this.getClass().getSimpleName() + ".onResume" + " @(Thread: '" + Thread.currentThread().getName() + "')");
 
 		super.onResume();
@@ -191,7 +195,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	@Override
-	public void onResumeGame() {
+	public synchronized void onResumeGame() {
 		Debug.d(this.getClass().getSimpleName() + ".onResumeGame" + " @(Thread: '" + Thread.currentThread().getName() + "')");
 
 		this.mEngine.start();
@@ -200,7 +204,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	@Override
-	public void onWindowFocusChanged(final boolean pHasWindowFocus) {
+	public synchronized void onWindowFocusChanged(final boolean pHasWindowFocus) {
 		super.onWindowFocusChanged(pHasWindowFocus);
 
 		if(pHasWindowFocus && this.mGamePaused && this.mGameCreated) {
@@ -230,7 +234,7 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	@Override
-	public void onPauseGame() {
+	public synchronized void onPauseGame() {
 		Debug.d(this.getClass().getSimpleName() + ".onPauseGame" + " @(Thread: '" + Thread.currentThread().getName() + "')");
 
 		this.mGamePaused = true;
@@ -434,24 +438,24 @@ public abstract class BaseGameActivity extends BaseActivity implements IGameInte
 	}
 
 	/**
-	 * @see {@link Engine#enableAccelerometerSensor(Context, IAccelerometerListener)}
+	 * @see {@link Engine#enableAccelerationSensor(Context, IAccelerationListener)}
 	 */
-	protected boolean enableAccelerometerSensor(final IAccelerometerListener pAccelerometerListener) {
-		return this.mEngine.enableAccelerometerSensor(this, pAccelerometerListener);
+	protected boolean enableAccelerationSensor(final IAccelerationListener pAccelerationListener) {
+		return this.mEngine.enableAccelerationSensor(this, pAccelerationListener);
 	}
 
 	/**
-	 * @see {@link Engine#enableAccelerometerSensor(Context, IAccelerometerListener, AccelerometerSensorOptions)}
+	 * @see {@link Engine#enableAccelerationSensor(Context, IAccelerationListener, AccelerationSensorOptions)}
 	 */
-	protected boolean enableAccelerometerSensor(final IAccelerometerListener pAccelerometerListener, final AccelerometerSensorOptions pAccelerometerSensorOptions) {
-		return this.mEngine.enableAccelerometerSensor(this, pAccelerometerListener, pAccelerometerSensorOptions);
+	protected boolean enableAccelerationSensor(final IAccelerationListener pAccelerationListener, final AccelerationSensorOptions pAccelerationSensorOptions) {
+		return this.mEngine.enableAccelerationSensor(this, pAccelerationListener, pAccelerationSensorOptions);
 	}
 
 	/**
-	 * @see {@link Engine#disableAccelerometerSensor(Context)}
+	 * @see {@link Engine#disableAccelerationSensor(Context)}
 	 */
-	protected boolean disableAccelerometerSensor() {
-		return this.mEngine.disableAccelerometerSensor(this);
+	protected boolean disableAccelerationSensor() {
+		return this.mEngine.disableAccelerationSensor(this);
 	}
 
 	/**
