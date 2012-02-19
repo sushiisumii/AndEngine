@@ -347,6 +347,11 @@ public abstract class PolygonBase extends PolygonShape {
 				}
 				return vertex;
 			}
+			
+			@Override
+			public String toString() {
+				return new String("(" + this.mX + ", " + this.mY);
+			}
 		}
 
 		public static enum DrawMode {

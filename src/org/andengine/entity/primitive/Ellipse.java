@@ -7,6 +7,8 @@ import org.andengine.opengl.vbo.VertexBufferObject.DrawType;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttribute;
 
+import android.util.Log;
+
 /**
  * 
  * @author Rodrigo Castro
@@ -91,7 +93,7 @@ public class Ellipse extends PolyLine {
 	// Methods
 	// ===========================================================
 
-	private static ArrayList<Vector2d> buildEllipseVertices(float pRadiusA, float pRadiusB, int pResolution) {
+	public static ArrayList<Vector2d> buildEllipseVertices(float pRadiusA, float pRadiusB, int pResolution) {
 
 		ArrayList<Vector2d> vertices = new ArrayList<PolygonBase.Vector2d>(pResolution);
 		
