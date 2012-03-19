@@ -263,6 +263,11 @@ public class AnimatedSprite extends TiledSprite implements TimeConstants {
 		return this.animate(pFrameDurations, pFrames, pLoopCount, null);
 	}
 
+
+	public AnimatedSprite animate(final long[] pFrameDurations, final int[] pFrames, final boolean pLoop) {
+		return this.animate(pFrameDurations, pFrames, (pLoop) ? AnimatedSprite.LOOP_CONTINUOUS : 0, null);
+	}
+	
 	/**
 	 * Animate specifics frames.
 	 * 
