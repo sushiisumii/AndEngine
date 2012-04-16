@@ -3,6 +3,7 @@ package org.andengine.opengl.texture.atlas.buildable;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.andengine.opengl.texture.ITextureStateListener;
 import org.andengine.opengl.texture.PixelFormat;
 import org.andengine.opengl.texture.TextureOptions;
 import org.andengine.opengl.texture.atlas.ITextureAtlas;
@@ -89,8 +90,18 @@ public class BuildableTextureAtlas<S extends ITextureAtlasSource, T extends ITex
 	}
 
 	@Override
+	public void load(final GLState pGLState) throws IOException {
+		this.mTextureAtlas.load(pGLState);
+	}
+
+	@Override
 	public void unload() {
 		this.mTextureAtlas.unload();
+	}
+
+	@Override
+	public void unload(final GLState pGLState) {
+		this.mTextureAtlas.unload(pGLState);
 	}
 
 	@Override

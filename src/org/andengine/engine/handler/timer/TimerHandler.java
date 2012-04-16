@@ -18,9 +18,9 @@ public class TimerHandler implements IUpdateHandler {
 	// Fields
 	// ===========================================================
 
-	private float mTimerSeconds;
-	private float mTimerSecondsElapsed;
-	private boolean mTimerCallbackTriggered;
+	protected float mTimerSeconds;
+	protected float mTimerSecondsElapsed;
+	protected boolean mTimerCallbackTriggered;
 	protected final ITimerCallback mTimerCallback;
 	private boolean mAutoReset;
 
@@ -33,6 +33,10 @@ public class TimerHandler implements IUpdateHandler {
 	}
 
 	public TimerHandler(final float pTimerSeconds, final boolean pAutoReset, final ITimerCallback pTimerCallback) {
+		if(pTimerSeconds <= 0){
+			throw new IllegalStateException("pTimerSeconds must be >= 0!");
+		}
+
 		this.mTimerSeconds = pTimerSeconds;
 		this.mAutoReset = pAutoReset;
 		this.mTimerCallback = pTimerCallback;

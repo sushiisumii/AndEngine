@@ -17,7 +17,7 @@ public abstract class Texture implements ITexture {
 	// Constants
 	// ===========================================================
 
-	private static final int HARDWARE_TEXTURE_ID_INVALID = -1;
+	public static final int HARDWARE_TEXTURE_ID_INVALID = -1;
 
 	// ===========================================================
 	// Fields
@@ -114,8 +114,18 @@ public abstract class Texture implements ITexture {
 	}
 
 	@Override
+	public void load(final GLState pGLState) throws IOException {
+		this.mTextureManager.loadTexture(pGLState, this);
+	}
+
+	@Override
 	public void unload() {
 		this.mTextureManager.unloadTexture(this);
+	}
+
+	@Override
+	public void unload(final GLState pGLState) {
+		this.mTextureManager.unloadTexture(pGLState, this);
 	}
 
 	@Override

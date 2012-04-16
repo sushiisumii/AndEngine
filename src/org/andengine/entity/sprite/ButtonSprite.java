@@ -1,7 +1,7 @@
 package org.andengine.entity.sprite;
 
+import org.andengine.entity.scene.ITouchArea;
 import org.andengine.entity.scene.Scene;
-import org.andengine.entity.scene.Scene.ITouchArea;
 import org.andengine.input.touch.TouchEvent;
 import org.andengine.opengl.texture.region.ITextureRegion;
 import org.andengine.opengl.texture.region.ITiledTextureRegion;
@@ -109,6 +109,10 @@ public class ButtonSprite extends TiledSprite {
 		return this.mState == State.PRESSED;
 	}
 
+	public State getState() {
+		return this.mState;
+	}
+
 	public void setOnClickListener(final OnClickListener pOnClickListener) {
 		this.mOnClickListener = pOnClickListener;
 	}
@@ -181,7 +185,7 @@ public class ButtonSprite extends TiledSprite {
 		public void onClick(final ButtonSprite pButtonSprite, final float pTouchAreaLocalX, final float pTouchAreaLocalY);
 	}
 
-	private static enum State {
+	public static enum State {
 		// ===========================================================
 		// Elements
 		// ===========================================================

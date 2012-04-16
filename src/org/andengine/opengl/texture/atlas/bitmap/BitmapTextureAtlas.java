@@ -9,7 +9,7 @@ import org.andengine.opengl.texture.atlas.TextureAtlas;
 import org.andengine.opengl.texture.atlas.bitmap.source.EmptyBitmapTextureAtlasSource;
 import org.andengine.opengl.texture.atlas.bitmap.source.IBitmapTextureAtlasSource;
 import org.andengine.opengl.texture.atlas.source.ITextureAtlasSource;
-import org.andengine.opengl.texture.bitmap.BitmapTexture.BitmapTextureFormat;
+import org.andengine.opengl.texture.bitmap.BitmapTextureFormat;
 import org.andengine.opengl.util.GLState;
 import org.andengine.util.exception.NullBitmapException;
 import org.andengine.util.math.MathUtils;
@@ -140,7 +140,7 @@ public class BitmapTextureAtlas extends TextureAtlas<IBitmapTextureAtlasSource> 
 
 		GLES20.glTexImage2D(GLES20.GL_TEXTURE_2D, 0, glInternalFormat, this.mWidth, this.mHeight, 0, glFormat, glType, null);
 
-		final boolean preMultipyAlpha = this.mTextureOptions.mPreMultipyAlpha;
+		final boolean preMultipyAlpha = this.mTextureOptions.mPreMultiplyAlpha;
 		/* Non alpha premultiplied bitmaps are loaded with ARGB_8888 and converted down manually. */
 		final Config bitmapConfig = (preMultipyAlpha) ? this.mBitmapTextureFormat.getBitmapConfig() : Config.ARGB_8888;
 

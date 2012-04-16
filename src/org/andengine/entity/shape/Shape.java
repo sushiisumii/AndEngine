@@ -61,6 +61,16 @@ public abstract class Shape extends Entity implements IShape {
 	}
 
 	@Override
+	public int getSourceBlendFunction() {
+		return this.mSourceBlendFunction;
+	}
+
+	@Override
+	public int getDestinationBlendFunction() {
+		return this.mDestinationBlendFunction;
+	}
+
+	@Override
 	public void setBlendFunction(final int pSourceBlendFunction, final int pDestinationBlendFunction) {
 		this.mSourceBlendFunction = pSourceBlendFunction;
 		this.mDestinationBlendFunction = pDestinationBlendFunction;
@@ -138,7 +148,7 @@ public abstract class Shape extends Entity implements IShape {
 	}
 
 	protected void initBlendFunction(final TextureOptions pTextureOptions) {
-		if(pTextureOptions.mPreMultipyAlpha) {
+		if(pTextureOptions.mPreMultiplyAlpha) {
 			this.setBlendFunction(IShape.BLENDFUNCTION_SOURCE_PREMULTIPLYALPHA_DEFAULT, IShape.BLENDFUNCTION_DESTINATION_PREMULTIPLYALPHA_DEFAULT);
 		}
 	}

@@ -3,9 +3,9 @@ package org.andengine.entity.primitive;
 import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
-import org.andengine.entity.primitive.Rectangle.HighPerformanceRectangleVertexBufferObject;
+import org.andengine.entity.primitive.vbo.HighPerformanceRectangleVertexBufferObject;
 import org.andengine.opengl.util.GLState;
-import org.andengine.opengl.vbo.VertexBufferObject.DrawType;
+import org.andengine.opengl.vbo.DrawType;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttribute;
 

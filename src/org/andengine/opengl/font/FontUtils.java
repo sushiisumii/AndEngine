@@ -2,6 +2,7 @@ package org.andengine.opengl.font;
 
 import java.util.List;
 
+import org.andengine.entity.text.AutoWrap;
 import org.andengine.util.TextUtils;
 import org.andengine.util.exception.MethodNotYetImplementedException;
 
@@ -98,7 +99,7 @@ public class FontUtils {
 			previousLetter = letter;
 
 			/* Check if this is the last character. */
-			if(pos == pEnd - 1) {
+			if(pos == (pEnd - 1)) {
 				width += letter.mOffsetX + letter.mWidth;
 			} else {
 				width += letter.mAdvance;
@@ -135,13 +136,83 @@ public class FontUtils {
 	 * @param pFont
 	 * @param pText
 	 * @param pResult
-	 * @param pLineWidthMaximum
+	 * @param pAutoWrapWidth
 	 * @return
 	 */
-	public static <L extends List<CharSequence>> L splitLines(final IFont pFont, final CharSequence pText, final L pResult, final float pLineWidthMaximum) {
+	public static <L extends List<CharSequence>> L splitLines(final IFont pFont, final CharSequence pText, final L pResult, final AutoWrap pAutoWrap, final float pAutoWrapWidth) {
 		/**
-		 * TODO In order to respect already existing linebreaks, {@link FontUtils#split(CharSequence, List)} could be leveraged and than this method could be called for each line. 
+		 * TODO In order to respect already existing linebreaks, {@link FontUtils#split(CharSequence, List)} could be leveraged and than the following methods could be called for each line.
 		 */
+		switch(pAutoWrap) {
+			case LETTERS:
+				return FontUtils.splitLinesByLetters(pFont, pText, pResult, pAutoWrapWidth);
+			case WORDS:
+				return FontUtils.splitLinesByWords(pFont, pText, pResult, pAutoWrapWidth);
+			case CJK:
+				return FontUtils.splitLinesByCJK(pFont, pText, pResult, pAutoWrapWidth);
+			case NONE:
+			default:
+				throw new IllegalArgumentException("Unexpected " + AutoWrap.class.getSimpleName() + ": '" + pAutoWrap + "'.");
+		}
+	}
+
+	private static <L extends List<CharSequence>> L splitLinesByLetters(final IFont pFont, final CharSequence pText, final L pResult, final float pAutoWrapWidth) {
+		final int textLength = pText.length();
+
+		int lineStart = 0;
+		int lineEnd = 0;
+		int lastNonWhitespace = 0;
+		boolean charsAvailable = false;
+
+		for(int i = 0; i < textLength; i++) {
+			final char character = pText.charAt(i);
+			if(character != ' ') {
+				if(charsAvailable) {
+					lastNonWhitespace = i + 1;
+				} else {
+					charsAvailable = true;
+					lineStart = i;
+					lastNonWhitespace = lineStart + 1;
+					lineEnd = lastNonWhitespace;
+				}
+			}
+
+			if(charsAvailable) {
+//				/* Just for debugging. */
+//				final CharSequence line = pText.subSequence(lineStart, lineEnd);
+//				final float lineWidth = FontUtils.measureText(pFont, pText, lineStart, lineEnd);
+//
+//				final CharSequence lookaheadLine = pText.subSequence(lineStart, lastNonWhitespace);
+				final float lookaheadLineWidth = FontUtils.measureText(pFont, pText, lineStart, lastNonWhitespace);
+
+				final boolean isEndReached = (i == (textLength - 1));
+				if(isEndReached) {
+					/* When the end of the string is reached, add remainder to result. */
+					if(lookaheadLineWidth <= pAutoWrapWidth) {
+						pResult.add(pText.subSequence(lineStart, lastNonWhitespace));
+					} else {
+						pResult.add(pText.subSequence(lineStart, lineEnd));
+						/* Avoid special case where last line is added twice. */
+						if(lineStart != i) {
+							pResult.add(pText.subSequence(i, lastNonWhitespace));
+						}
+					}
+				} else {
+					if(lookaheadLineWidth <= pAutoWrapWidth) {
+						lineEnd = lastNonWhitespace;
+					} else {
+						pResult.add(pText.subSequence(lineStart, lineEnd));
+						i = lineEnd - 1;
+						charsAvailable = false;
+					}
+				}
+			}
+		}
+
+		return pResult;
+	}
+
+	private static <L extends List<CharSequence>> L splitLinesByWords(final IFont pFont, final CharSequence pText, final L pResult, final float pAutoWrapWidth) {
 		final int textLength = pText.length();
 
 		if(textLength == 0) {
@@ -154,14 +225,14 @@ public class FontUtils {
 		int lineStart = FontUtils.UNSPECIFIED;
 		int lineEnd = FontUtils.UNSPECIFIED;
 
-		float lineWidthRemaining = pLineWidthMaximum;
+		float lineWidthRemaining = pAutoWrapWidth;
 		boolean firstWordInLine = true;
 		int i = 0;
 		while(i < textLength) {
 			int spacesSkipped = 0;
 			/* Find next word. */
 			{ /* Skip whitespaces. */
-				while(i < textLength && pText.charAt(i) == ' ') {
+				while((i < textLength) && (pText.charAt(i) == ' ')) {
 					i++;
 					spacesSkipped++;
 				}
@@ -172,9 +243,9 @@ public class FontUtils {
 			if(lineStart == FontUtils.UNSPECIFIED) {
 				lineStart = wordStart;
 			}
-			
+
 			{ /* Skip non-whitespaces. */
-				while(i < textLength && pText.charAt(i) != ' ') {
+				while((i < textLength) && (pText.charAt(i) != ' ')) {
 					i++;
 				}
 			}
@@ -222,11 +293,11 @@ public class FontUtils {
 				/* Special case for lines with only one word. */
 				if(firstWordInLine) {
 					/* Check for lines that are just too big. */
-					if(wordWidth >= pLineWidthMaximum) {
+					if(wordWidth >= pAutoWrapWidth) {
 						pResult.add(pText.subSequence(wordStart, wordEnd));
-						lineWidthRemaining = pLineWidthMaximum;
+						lineWidthRemaining = pAutoWrapWidth;
 					} else {
-						lineWidthRemaining = pLineWidthMaximum - wordWidth;
+						lineWidthRemaining = pAutoWrapWidth - wordWidth;
 
 						/* Check if the end was reached. */
 						if(wordEnd == textLength) {
@@ -252,7 +323,7 @@ public class FontUtils {
 						break;
 					} else {
 						/* Start a new line, carrying over the current word. */
-						lineWidthRemaining = pLineWidthMaximum - wordWidth;
+						lineWidthRemaining = pAutoWrapWidth - wordWidth;
 						firstWordInLine = false;
 						lastWordEnd = wordEnd;
 						lineStart = wordStart;
@@ -261,6 +332,71 @@ public class FontUtils {
 				}
 			}
 		}
+		return pResult;
+	}
+	
+	private static <L extends List<CharSequence>> L splitLinesByCJK(final IFont pFont, final CharSequence pText, final L pResult, final float pAutoWrapWidth) {
+		final int textLength = pText.length();
+
+		int lineStart = 0;
+		int lineEnd = 0;
+
+		/* Skip whitespaces at the beginning of the string. */
+		while((lineStart < textLength) && (pText.charAt(lineStart) == ' ')) {
+			lineStart++;
+			lineEnd++;
+		}
+		
+		int i = lineEnd;
+		while(i < textLength) {
+			lineStart = lineEnd;
+
+			{ /* Look for a sub string */
+				boolean charsAvailable = true;
+				while(i < textLength) {
+					
+					{ /* Skip whitespaces at the end of the string */
+						int j = lineEnd;
+						while ( j < textLength ) {
+							if ( pText.charAt( j ) == ' ' ) {
+								j++;
+							}
+							else {
+								break;
+							}
+						}
+						if ( j == textLength ) {
+							if ( lineStart == lineEnd ) {
+								charsAvailable = false;
+							}
+							i = textLength;
+							break;
+						}
+					}
+					
+					lineEnd++;
+
+					final float lineWidth = FontUtils.measureText(pFont, pText, lineStart, lineEnd);
+
+					if(lineWidth > pAutoWrapWidth) {
+						if ( lineStart < lineEnd - 1 ) {
+							lineEnd--;
+						}
+						
+						pResult.add(pText.subSequence(lineStart, lineEnd));
+						charsAvailable = false;
+						i = lineEnd;
+						break;
+					}
+					i = lineEnd;
+				}
+
+				if(charsAvailable) {
+					pResult.add(pText.subSequence(lineStart, lineEnd));
+				}
+			}
+		}
+
 		return pResult;
 	}
 

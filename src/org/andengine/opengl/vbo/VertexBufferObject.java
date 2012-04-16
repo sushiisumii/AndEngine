@@ -8,10 +8,8 @@ import org.andengine.opengl.util.BufferUtils;
 import org.andengine.opengl.util.GLState;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributes;
 import org.andengine.util.adt.DataConstants;
-import org.andengine.util.system.SystemUtils;
 
 import android.opengl.GLES20;
-import android.os.Build;
 
 /**
  * TODO Extract a common base class from {@link VertexBufferObject} and {@link ZeroMemoryVertexBufferObject} (due to significant code duplication).
@@ -63,13 +61,8 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 		this.mAutoDispose = pAutoDispose;
 		this.mVertexBufferObjectAttributes = pVertexBufferObjectAttributes;
 
-		if(SystemUtils.isAndroidVersion(Build.VERSION_CODES.HONEYCOMB, Build.VERSION_CODES.HONEYCOMB_MR2)) {
-			/* Honeycomb workaround for issue 16941. */
-			this.mByteBuffer = BufferUtils.allocateDirect(pCapacity * DataConstants.BYTES_PER_FLOAT);
-		} else {
-			/* Other SDK versions. */
-			this.mByteBuffer = ByteBuffer.allocateDirect(pCapacity * DataConstants.BYTES_PER_FLOAT);
-		}
+		this.mByteBuffer = BufferUtils.allocateDirectByteBuffer(pCapacity * DataConstants.BYTES_PER_FLOAT);
+
 		this.mByteBuffer.order(ByteOrder.nativeOrder());
 	}
 
@@ -151,7 +144,7 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 			this.mVertexBufferObjectManager.onVertexBufferObjectLoaded(this);
 		}
 
-		pGLState.bindBuffer(this.mHardwareBufferID);
+		pGLState.bindArrayBuffer(this.mHardwareBufferID);
 
 		if(this.mDirtyOnHardware) {
 			this.onBufferData();
@@ -177,7 +170,7 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 
 	@Override
 	public void unloadFromHardware(final GLState pGLState) {
-		pGLState.deleteBuffer(this.mHardwareBufferID);
+		pGLState.deleteArrayBuffer(this.mHardwareBufferID);
 
 		this.mHardwareBufferID = IVertexBufferObject.HARDWARE_BUFFER_ID_INVALID;
 	}
@@ -199,10 +192,7 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 
 			this.mVertexBufferObjectManager.onUnloadVertexBufferObject(this);
 
-			/* Cleanup due to 'Honeycomb workaround for issue 16941' in constructor. */
-			if(SystemUtils.isAndroidVersion(Build.VERSION_CODES.HONEYCOMB, Build.VERSION_CODES.HONEYCOMB_MR2)) {
-				BufferUtils.freeDirect(this.mByteBuffer);
-			}
+			BufferUtils.freeDirectByteBuffer(this.mByteBuffer);
 		} else {
 			throw new AlreadyDisposedException();
 		}
@@ -229,52 +219,4 @@ public abstract class VertexBufferObject implements IVertexBufferObject {
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
-
-	public static enum DrawType {
-		// ===========================================================
-		// Elements
-		// ===========================================================
-
-		STATIC(GLES20.GL_STATIC_DRAW),
-		DYNAMIC(GLES20.GL_DYNAMIC_DRAW),
-		STREAM(GLES20.GL_STREAM_DRAW);
-
-		// ===========================================================
-		// Constants
-		// ===========================================================
-
-		private final int mUsage;
-
-		// ===========================================================
-		// Fields
-		// ===========================================================
-
-		// ===========================================================
-		// Constructors
-		// ===========================================================
-
-		private DrawType(final int pUsage) {
-			this.mUsage = pUsage;
-		}
-
-		// ===========================================================
-		// Getter & Setter
-		// ===========================================================
-
-		public int getUsage() {
-			return this.mUsage;
-		}
-
-		// ===========================================================
-		// Methods for/from SuperClass/Interfaces
-		// ===========================================================
-
-		// ===========================================================
-		// Methods
-		// ===========================================================
-
-		// ===========================================================
-		// Inner and Anonymous Classes
-		// ===========================================================
-	}
 }

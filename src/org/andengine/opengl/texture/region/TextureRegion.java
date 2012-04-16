@@ -9,7 +9,7 @@ import org.andengine.opengl.texture.ITexture;
  * @author Nicolas Gramlich
  * @since 14:29:59 - 08.03.2010
  */
-public class TextureRegion extends BaseTextureRegion implements ITextureRegion {
+public class TextureRegion extends BaseTextureRegion {
 	// ===========================================================
 	// Constants
 	// ===========================================================
@@ -75,9 +75,9 @@ public class TextureRegion extends BaseTextureRegion implements ITextureRegion {
 	@Override
 	public TextureRegion deepCopy() {
 		if(this.mRotated) {
-			return new TextureRegion(this.mTexture, this.mTextureX, this.mTextureY, this.mTextureHeight, this.mTextureWidth, this.mRotated);
+			return new TextureRegion(this.mTexture, this.mTextureX, this.mTextureY, this.mTextureHeight, this.mTextureWidth, this.mScale, this.mRotated);
 		} else {
-			return new TextureRegion(this.mTexture, this.mTextureX, this.mTextureY, this.mTextureWidth, this.mTextureHeight, this.mRotated);
+			return new TextureRegion(this.mTexture, this.mTextureX, this.mTextureY, this.mTextureWidth, this.mTextureHeight, this.mScale, this.mRotated);
 		}
 	}
 
@@ -223,6 +223,12 @@ public class TextureRegion extends BaseTextureRegion implements ITextureRegion {
 
 		this.mV = y / textureHeight;
 		this.mV2 = (y + this.mTextureHeight) / textureHeight;
+
+//		this.mU = (x + 0.5f) / textureWidth;
+//		this.mU2 = (x + this.mTextureWidth - 0.5f) / textureWidth;
+//
+//		this.mV = (y + 0.5f) / textureHeight;
+//		this.mV2 = (y + this.mTextureHeight - 0.5f) / textureHeight;
 	}
 
 	// ===========================================================

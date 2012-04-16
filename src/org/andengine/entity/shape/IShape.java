@@ -1,7 +1,7 @@
 package org.andengine.entity.shape;
 
 import org.andengine.entity.IEntity;
-import org.andengine.entity.scene.Scene.ITouchArea;
+import org.andengine.entity.scene.ITouchArea;
 import org.andengine.opengl.shader.ShaderProgram;
 import org.andengine.opengl.vbo.IVertexBufferObject;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
@@ -34,6 +34,8 @@ public interface IShape extends IEntity, ITouchArea {
 
 	public boolean isBlendingEnabled();
 	public void setBlendingEnabled(final boolean pBlendingEnabled);
+	public int getSourceBlendFunction();
+	public int getDestinationBlendFunction();
 	public void setBlendFunction(final int pSourceBlendFunction, final int pDestinationBlendFunction);
 	
 	public VertexBufferObjectManager getVertexBufferObjectManager();

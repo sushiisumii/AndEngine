@@ -52,7 +52,7 @@ public class ParticleSystem<T extends Entity> extends Entity {
 	private float mParticlesDueToSpawn;
 
 	private int mParticleModifierCount;
-	private int mParticleInitializerCount;;
+	private int mParticleInitializerCount;
 
 	// ===========================================================
 	// Constructors
@@ -224,7 +224,7 @@ public class ParticleSystem<T extends Entity> extends Entity {
 		}
 	}
 
-	private float determineCurrentRate() {
+	protected float determineCurrentRate() {
 		if(this.mRateMinimum == this.mRateMaximum){
 			return this.mRateMinimum;
 		} else {

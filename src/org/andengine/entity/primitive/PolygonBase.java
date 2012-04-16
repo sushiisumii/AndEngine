@@ -3,15 +3,15 @@ package org.andengine.entity.primitive;
 import java.util.ArrayList;
 
 import org.andengine.engine.camera.Camera;
-import org.andengine.entity.primitive.Rectangle.HighPerformanceRectangleVertexBufferObject;
+import org.andengine.entity.primitive.vbo.HighPerformanceRectangleVertexBufferObject;
 import org.andengine.entity.shape.PolygonShape;
 import org.andengine.opengl.shader.PositionColorShaderProgram;
 import org.andengine.opengl.shader.constants.ShaderProgramConstants;
 import org.andengine.opengl.util.GLState;
+import org.andengine.opengl.vbo.DrawType;
 import org.andengine.opengl.vbo.HighPerformanceVertexBufferObject;
 import org.andengine.opengl.vbo.IVertexBufferObject;
 import org.andengine.opengl.vbo.LowMemoryVertexBufferObject;
-import org.andengine.opengl.vbo.VertexBufferObject.DrawType;
 import org.andengine.opengl.vbo.VertexBufferObjectManager;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttribute;
 import org.andengine.opengl.vbo.attribute.VertexBufferObjectAttributes;
@@ -209,7 +209,7 @@ public abstract class PolygonBase extends PolygonShape {
 			public void onUpdateColor(final PolygonBase pPolygon) {
 				final float[] bufferData = this.mBufferData;
 
-				final float packedColor = pPolygon.getColor().getFloatPacked();
+				final float packedColor = pPolygon.getColor().getABGRPackedFloat();
 
 				int nbVertexInTriangles = pPolygon.getVertices().size();
 				for( int i = 0; i < nbVertexInTriangles; i++)

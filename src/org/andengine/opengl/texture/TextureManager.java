@@ -1,13 +1,15 @@
 package org.andengine.opengl.texture;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
 import org.andengine.opengl.texture.bitmap.BitmapTexture;
+import org.andengine.opengl.texture.bitmap.BitmapTextureFormat;
 import org.andengine.opengl.util.GLState;
+import org.andengine.util.adt.io.in.AssetInputStreamOpener;
+import org.andengine.util.adt.io.in.IInputStreamOpener;
 import org.andengine.util.debug.Debug;
 
 import android.content.res.AssetManager;
@@ -104,11 +106,9 @@ public class TextureManager {
 	public synchronized void addMappedTexture(final String pID, final ITexture pTexture) throws IllegalArgumentException {
 		if(pID == null) {
 			throw new IllegalArgumentException("pID must not be null!");
-		}
-		if(pTexture == null) {
+		} else if(pTexture == null) {
 			throw new IllegalArgumentException("pTexture must not be null!");
-		}
-		if(this.mTexturesMapped.containsKey(pID)) {
+		} else if(this.mTexturesMapped.containsKey(pID)) {
 			throw new IllegalArgumentException("Collision for pID: '" + pID + "'.");
 		}
 		this.mTexturesMapped.put(pID, pTexture);
@@ -129,6 +129,7 @@ public class TextureManager {
 		if(pTexture == null) {
 			throw new IllegalArgumentException("pTexture must not be null!");
 		}
+
 		if(this.mTexturesManaged.contains(pTexture)) {
 			/* Just make sure it doesn't get deleted. */
 			this.mTexturesToBeUnloaded.remove(pTexture);
@@ -141,6 +142,35 @@ public class TextureManager {
 	}
 
 	/**
+	 * Must be called from the GL-{@link Thread}.
+	 *
+	 * @param pGLState
+	 * @param pTexture the {@link ITexture} to be loaded right now, if it is not loaded.
+	 * @return <code>true</code> when the {@link ITexture} was previously not managed by this {@link TextureManager}, <code>false</code> if it was already managed.
+	 */
+	public synchronized boolean loadTexture(final GLState pGLState, final ITexture pTexture) throws IOException {
+		if(pTexture == null) {
+			throw new IllegalArgumentException("pTexture must not be null!");
+		}
+
+		if(!pTexture.isLoadedToHardware()) {
+			pTexture.loadToHardware(pGLState);
+		} else if(pTexture.isUpdateOnHardwareNeeded()) {
+			pTexture.reloadToHardware(pGLState);
+		}
+
+		if(this.mTexturesManaged.contains(pTexture)) {
+			/* Just make sure it doesn't get deleted. */
+			this.mTexturesToBeUnloaded.remove(pTexture);
+			return false;
+		} else {
+			this.mTexturesManaged.add(pTexture);
+			this.mTexturesLoaded.add(pTexture);
+			return true;
+		}
+	}
+
+	/**
 	 * @param pTexture the {@link ITexture} to be unloaded before the very next frame is drawn (Or prevent it from being loaded then).
 	 * @return <code>true</code> when the {@link ITexture} was already managed by this {@link TextureManager}, <code>false</code> if it was not managed.
 	 */
@@ -148,6 +178,7 @@ public class TextureManager {
 		if(pTexture == null) {
 			throw new IllegalArgumentException("pTexture must not be null!");
 		}
+
 		if(this.mTexturesManaged.contains(pTexture)) {
 			/* If the Texture is loaded, unload it.
 			 * If the Texture is about to be loaded, stop it from being loaded. */
@@ -156,6 +187,31 @@ public class TextureManager {
 			} else if(this.mTexturesToBeLoaded.remove(pTexture)) {
 				this.mTexturesManaged.remove(pTexture);
 			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Must be called from the GL-{@link Thread}.
+	 *
+	 * @param pGLState
+	 * @param pTexture the {@link ITexture} to be unloaded right now, if it is loaded.
+	 * @return <code>true</code> when the {@link ITexture} was already managed by this {@link TextureManager}, <code>false</code> if it was not managed.
+	 */
+	public synchronized boolean unloadTexture(final GLState pGLState, final ITexture pTexture) {
+		if(pTexture == null) {
+			throw new IllegalArgumentException("pTexture must not be null!");
+		} else if(pTexture.isLoadedToHardware()) {
+			pTexture.unloadFromHardware(pGLState);
+		}
+
+		if(this.mTexturesManaged.contains(pTexture)) {
+			/* Just make sure it doesn't get loaded. */
+			this.mTexturesLoaded.remove(pTexture);
+			this.mTexturesToBeLoaded.remove(pTexture);
+
 			return true;
 		} else {
 			return false;
@@ -212,7 +268,7 @@ public class TextureManager {
 		}
 
 		/* Finally invoke the GC if anything has changed. */
-		if(texturesToBeLoadedCount > 0 || texturesToBeUnloadedCount > 0) {
+		if((texturesToBeLoadedCount > 0) || (texturesToBeUnloadedCount > 0)) {
 			System.gc();
 		}
 	}
@@ -225,12 +281,7 @@ public class TextureManager {
 		if(this.hasMappedTexture(pID)) {
 			return this.getMappedTexture(pID);
 		} else {
-			final ITexture texture = new BitmapTexture(this, pTextureOptions) {
-				@Override
-				protected InputStream onGetInputStream() throws IOException {
-					return pAssetManager.open(pAssetPath);
-				}
-			};
+			final ITexture texture = new BitmapTexture(this, new AssetInputStreamOpener(pAssetManager, pAssetPath), pTextureOptions);
 			this.loadTexture(texture);
 			this.addMappedTexture(pID, texture);
 
@@ -238,21 +289,26 @@ public class TextureManager {
 		}
 	}
 
-	public synchronized ITexture getTexture(final String pID, final IAssetInputStreamOpener pAssetInputStreamOpener, final String pAssetPath) throws IOException {
-		return this.getTexture(pID, pAssetInputStreamOpener, pAssetPath, TextureOptions.DEFAULT);
+	public synchronized ITexture getTexture(final String pID, final IInputStreamOpener pInputStreamOpener) throws IOException {
+		return this.getTexture(pID, pInputStreamOpener, TextureOptions.DEFAULT);
 	}
 
-	public synchronized ITexture getTexture(final String pID, final IAssetInputStreamOpener pAssetInputStreamOpener, final String pAssetPath, final TextureOptions pTextureOptions) throws IOException {
+	public synchronized ITexture getTexture(final String pID, final IInputStreamOpener pInputStreamOpener, final TextureOptions pTextureOptions) throws IOException {
+		return this.getTexture(pID, pInputStreamOpener, BitmapTextureFormat.RGBA_8888, pTextureOptions);
+	}
+
+	public synchronized ITexture getTexture(final String pID, final IInputStreamOpener pInputStreamOpener, final BitmapTextureFormat pBitmapTextureFormat, final TextureOptions pTextureOptions) throws IOException {
+		return this.getTexture(pID, pInputStreamOpener, pBitmapTextureFormat, pTextureOptions, true);
+	}
+
+	public synchronized ITexture getTexture(final String pID, final IInputStreamOpener pInputStreamOpener, final BitmapTextureFormat pBitmapTextureFormat, final TextureOptions pTextureOptions, final boolean pLoadToHardware) throws IOException {
 		if(this.hasMappedTexture(pID)) {
 			return this.getMappedTexture(pID);
 		} else {
-			final ITexture texture = new BitmapTexture(this, pTextureOptions) {
-				@Override
-				protected InputStream onGetInputStream() throws IOException {
-					return pAssetInputStreamOpener.open(pAssetPath);
-				}
-			};
-			this.loadTexture(texture);
+			final ITexture texture = new BitmapTexture(this, pInputStreamOpener, pBitmapTextureFormat, pTextureOptions);
+			if(pLoadToHardware) {
+				this.loadTexture(texture);
+			}
 			this.addMappedTexture(pID, texture);
 
 			return texture;
@@ -262,16 +318,4 @@ public class TextureManager {
 	// ===========================================================
 	// Inner and Anonymous Classes
 	// ===========================================================
-
-	public interface IAssetInputStreamOpener {
-		// ===========================================================
-		// Constants
-		// ===========================================================
-
-		// ===========================================================
-		// Methods
-		// ===========================================================
-
-		public InputStream open(final String pAssetPath);
-	}
 }
