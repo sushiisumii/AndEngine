@@ -189,6 +189,7 @@ public interface IEntity extends IDrawHandler, IUpdateHandler, IDisposable {
 
 	public IEntity getChild(final int pTag);
 	public IEntity getChild(final IEntityMatcher pEntityMatcher);
+	public IEntity getChildByIndex(final int index);
 	public IEntity getFirstChild();
 	public IEntity getLastChild();
 

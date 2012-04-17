@@ -611,6 +611,17 @@ public class Entity implements IEntity {
 		}
 		return this.mChildren.get(pEntityMatcher);
 	}
+	
+	@Override
+	public IEntity getChildByIndex(final int index) {
+		if(this.mChildren == null) {
+			return null;
+		}
+		if(this.mChildren.size() > index && index >= 0) {
+			return this.mChildren.get(index);
+		}
+		return null;
+	}
 
 	@Override
 	public IEntity getFirstChild() {

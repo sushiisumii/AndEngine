@@ -580,6 +580,11 @@ public abstract class BaseMenuItemDecorator implements IMenuItem {
 	}
 
 	@Override
+	public IEntity getChildByIndex(final int index) {
+		return this.mMenuItem.getChildByIndex(index);
+	}
+
+	@Override
 	public ArrayList<IEntity> query(final IEntityMatcher pEntityMatcher) {
 		return this.mMenuItem.query(pEntityMatcher);
 	}
