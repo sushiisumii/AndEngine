@@ -24,7 +24,7 @@ public abstract class GenericPool<T> {
 	// Fields
 	// ===========================================================
 
-	private final ArrayList<T> mAvailableItems;
+	protected final ArrayList<T> mAvailableItems;
 	private final int mGrowth;
 	private final int mAvailableItemCountMaximum;
 
